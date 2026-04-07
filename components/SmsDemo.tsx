@@ -10,7 +10,6 @@ type Props = {
   prospectFirstName: string;
   companyName: string;
   logoUrl?: string;
-  coldTimeoutMs?: number;
 };
 
 export default function SmsDemo({
@@ -18,14 +17,10 @@ export default function SmsDemo({
   prospectFirstName,
   companyName,
   logoUrl,
-  coldTimeoutMs = 60_000,
 }: Props) {
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [typing, setTyping] = useState(false);
-  const [callState, setCallState] = useState<"idle" | "calling" | "called">("idle");
-  const lastLeadAtRef = useRef<number>(0);
-  const firedRef = useRef(false);
   const scrollerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -75,44 +70,6 @@ export default function SmsDemo({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Cold timer: starts after the first lead reply.
-  useEffect(() => {
-    if (firedRef.current) return;
-    const hasLeadReply = messages.some((m) => m.role === "lead");
-    if (!hasLeadReply) return;
-
-    const tick = () => {
-      const elapsed = Date.now() - lastLeadAtRef.current;
-      const remain = Math.max(0, coldTimeoutMs - elapsed);
-      if (remain <= 0 && !firedRef.current) {
-        firedRef.current = true;
-        triggerCall();
-      }
-    };
-    const id = setInterval(tick, 500);
-    tick();
-    return () => clearInterval(id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [messages, coldTimeoutMs]);
-
-  async function triggerCall() {
-    setCallState("calling");
-    try {
-      const res = await fetch("/api/voice-call", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          session,
-          smsHistory: messages.map((m) => ({ role: m.role, text: m.text })),
-        }),
-      });
-      if (res.ok) setCallState("called");
-      else setCallState("idle");
-    } catch {
-      setCallState("idle");
-    }
-  }
-
   async function onSend(e: React.FormEvent) {
     e.preventDefault();
     const text = input.trim();
@@ -123,7 +80,6 @@ export default function SmsDemo({
     ];
     setMessages(next);
     setInput("");
-    lastLeadAtRef.current = Date.now();
     await sendTurn(next);
   }
 
@@ -156,21 +112,18 @@ export default function SmsDemo({
             </div>
             <div className="truncate text-sm font-semibold text-neutral-900 sm:text-base">{companyName}</div>
           </div>
-          <a
-            href="https://cal.com/readymation/ai-reactivation"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="shrink-0 rounded-full bg-blue-500 px-3 py-1.5 text-[11px] font-semibold text-white transition hover:bg-blue-400 active:scale-95 sm:px-4 sm:text-xs"
-            style={{ animation: "cta-glow 2s ease-in-out infinite" }}
-          >
-            Book Now
-          </a>
+          {messages.length >= 4 && (
+            <a
+              href="https://cal.com/readymation/ai-reactivation"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="shrink-0 rounded-full bg-blue-500 px-3 py-1.5 text-[11px] font-semibold text-white transition hover:bg-blue-400 active:scale-95 sm:px-4 sm:text-xs"
+              style={{ animation: "cta-glow 2s ease-in-out infinite" }}
+            >
+              Book Now
+            </a>
+          )}
         </div>
-
-        {/* Banner */}
-        {callState === "called" && (
-          <Banner tone="success">You have an incoming call. Check your phone.</Banner>
-        )}
 
         {/* Messages */}
         <div
@@ -197,14 +150,14 @@ export default function SmsDemo({
               onChange={(e) => setInput(e.target.value)}
               placeholder="Text message"
               className="w-full bg-transparent text-sm text-neutral-900 outline-none placeholder:text-neutral-400"
-              disabled={callState !== "idle"}
+              disabled={typing}
             />
           </div>
           <button
             type="submit"
-            disabled={!input.trim() || typing || callState !== "idle"}
+            disabled={!input.trim() || typing}
             className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-600 text-white shadow-sm transition hover:bg-blue-700 disabled:opacity-40"
-            style={(!input.trim() || typing || callState !== "idle") ? undefined : { animation: "send-pulse 2s ease-in-out infinite" }}
+            style={(!input.trim() || typing) ? undefined : { animation: "send-pulse 2s ease-in-out infinite" }}
             aria-label="Send"
           >
             <svg viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
@@ -244,14 +197,3 @@ function TypingBubble() {
   );
 }
 
-function Banner({ tone, children }: { tone: "warning" | "success"; children: React.ReactNode }) {
-  const styles =
-    tone === "warning"
-      ? "bg-amber-50/80 border-amber-200 text-amber-900"
-      : "bg-emerald-50/80 border-emerald-200 text-emerald-900";
-  return (
-    <div className={`mb-3 rounded-2xl border px-4 py-2.5 text-center text-xs font-medium backdrop-blur ${styles}`}>
-      {children}
-    </div>
-  );
-}
