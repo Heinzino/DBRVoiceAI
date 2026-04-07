@@ -2,6 +2,7 @@ import OptInForm from "@/components/OptInForm";
 
 type SearchParams = Promise<{ name?: string; email?: string; website?: string }>;
 
+// Pre-fills form fields from URL query params (?name=&email=&website=)
 export default async function Home({ searchParams }: { searchParams: SearchParams }) {
   const sp = await searchParams;
   const name = sp.name ?? "";
