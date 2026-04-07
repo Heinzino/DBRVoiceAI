@@ -13,6 +13,7 @@ export const metadata: Metadata = {
   icons: { icon: "/favicon.png" },
 };
 
+// Root layout — wraps all pages with shared metadata and global styles
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
