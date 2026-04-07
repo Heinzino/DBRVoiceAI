@@ -1,0 +1,55 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "SF Pro Display", "Inter", system-ui, -apple-system, sans-serif;
+  --font-serif: "Instrument Serif", "Playfair Display", Georgia, serif;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* iMessage-style gradient background for demo page */
+.chat-backdrop {
+  background:
+    radial-gradient(1200px 600px at 10% -10%, rgba(147, 197, 253, 0.35), transparent 60%),
+    radial-gradient(1000px 500px at 100% 10%, rgba(196, 181, 253, 0.3), transparent 60%),
+    radial-gradient(800px 400px at 50% 100%, rgba(251, 207, 232, 0.25), transparent 60%),
+    linear-gradient(180deg, #f7f9fc 0%, #eef2f9 100%);
+}
+
+/* subtle glass card */
+.glass {
+  background: rgba(255, 255, 255, 0.55);
+  backdrop-filter: saturate(180%) blur(24px);
+  -webkit-backdrop-filter: saturate(180%) blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+}
+
+.bubble-in {
+  background: rgba(233, 233, 235, 0.85);
+  color: #111;
+  backdrop-filter: blur(8px);
+}
+
+.bubble-out {
+  background: linear-gradient(180deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.2) inset;
+}
+
+
+@keyframes typing {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+  30% { transform: translateY(-3px); opacity: 1; }
+}
+.dot { animation: typing 1.2s infinite; }
+.dot:nth-child(2) { animation-delay: 0.15s; }
+.dot:nth-child(3) { animation-delay: 0.3s; }

@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install:*)",
+      "Bash(SESSION_SECRET=devdevdevdevdevdevdevdev ANTHROPIC_API_KEY=sk-ant-placeholder npx next build)",
+      "Bash(npm uninstall:*)",
+      "Bash(npx next:*)",
+      "Bash(npm run:*)",
+      "Bash(node:*)",
+      "Bash(npx tsx:*)",
+      "WebSearch"
+    ]
+  }
+}
