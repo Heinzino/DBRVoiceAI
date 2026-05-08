@@ -50,9 +50,30 @@ export async function fetchSiteText(url: string): Promise<{ text: string; logoUr
     const meta = $('meta[name="description"]').attr("content") ?? "";
     const bodyText = $("body").text().replace(/\s+/g, " ").trim();
     const composed = [title, meta, bodyText].filter(Boolean).join("\n\n");
-    return { text: composed.slice(0, MAX_CHARS), logoUrl };
+
+    // SPA fallback: if SSR HTML has almost no text (React/Vite/etc shells),
+    // ask Jina Reader to render the page and return clean text.
+    let text = composed;
+    if (text.length < 50) {
+      const rendered = await fetchRenderedText(url, controller.signal);
+      if (rendered) text = rendered;
+    }
+
+    return { text: text.slice(0, MAX_CHARS), logoUrl };
   } finally {
     clearTimeout(timeout);
+  }
+}
+
+async function fetchRenderedText(url: string, signal: AbortSignal): Promise<string | null> {
+  try {
+    const headers: Record<string, string> = { accept: "text/plain" };
+    if (process.env.JINA_API_KEY) headers.authorization = `Bearer ${process.env.JINA_API_KEY}`;
+    const res = await fetch(`https://r.jina.ai/${url}`, { signal, headers });
+    if (!res.ok) return null;
+    return (await res.text()).trim() || null;
+  } catch {
+    return null;
   }
 }
 
